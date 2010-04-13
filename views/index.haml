@@ -1,0 +1,35 @@
+#editor
+  %form{:action => "/", :method => "post"}
+    %fieldset
+      %ol
+        %li
+          %label Your HTML
+          %textarea#code{:name=>"code"}=@code
+
+            
+        %li
+          %input{:type=>"submit", :value=>"Convert!"}
+
+#output
+  %form
+    %fieldset
+      %ol
+        %li
+          %label Output
+          %textarea#output= @xml
+          
+#help
+  %h1 What is this all about?
+  %p
+    %a{:href=>"http://www.docbook.org/"} Docbook
+    is an incredible way to write books, articles, and documentation, especially those on technical subjects. Docbook is a special form of XML markup, and unfortunately it's not exactly friendly to writers who aren't comfortable writing XML. There also aren't great visual editors like there are for HTML.
+  %p This site is an experiment to see if it's feasible to allow a prospective writer to write Docbook's markup using very simple HTML. 
+  %h2 How to write
+  %p Use headings and paragraphs. Each chapter of your book should start with an h1 tag, or a Heading 1. Heading 2 through heading 6 are sections of chapters. Paragraoghs are just regular paragraphs. The converter will handle the nesting - all you have to do is just write, and let the program convert your work. 
+  %h2 What do I do next?
+  %p
+    You can use the
+    %a{:href => "http://www.napcs.com/products/docbook"} Short-Attention-Span Docbook
+    system, a free set of tools for converting Docbook to various formats, including great-looking PDFs.
+  %h2 Advantages of Docbook
+  %p Docbook provides authors with indexing, tables of contents, and semantec markup which separates presentation from content. Authors can mark up their content with tags, and styling can be applied much later by different means. The author is free to focus on writing and not fighting with how things look.
