@@ -14,7 +14,7 @@ end
 
 get '/' do
   if @code.nil?
-    @code = %Q{<h1>This is a chapter</h1><p>This is an intro paragraph</p><h2>This is section 1</h2><p>This is section 1's first paragraph.</p><h2>This is a subsection of section 1</h2><p>And this is its paragraph.</p><h2>This is section 2</h2><p>And this is section 2's first paragraph!</p>}
+    @code = %Q{<h1>This is a chapter</h1><p>This is an intro paragraph</p><h2>This is section 1</h2><p>This is section 1's first paragraph.</p><h3>This is a subsection of section 1</h3><p>And this is its paragraph.</p><h2>This is section 2</h2><p>And this is section 2's first paragraph!</p>}
   end
   haml :index
   
