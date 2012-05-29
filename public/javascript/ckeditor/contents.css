@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003-2010, CKSource - Frederico Knabben. All rights reserved.
+Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
 
@@ -16,20 +16,51 @@ body
 	background-color: #fff;
 }
 
-html
+ol,ul,dl
 {
-	/* #3658: [IE6] Editor document has horizontal scrollbar on long lines
-	To prevent this misbehavior, we show the scrollbar always */
-	_overflow-y: scroll
+	/* IE7: reset rtl list margin. (#7334) */
+	*margin-right:0px;
+	/* preserved spaces for list items with text direction other than the list. (#6249,#8049)*/
+    padding:0 40px;
 }
 
-img:-moz-broken
-{
-	-moz-force-broken-image-icon : 1;
-	width : 24px;
-	height : 24px;
+div[data-docbook-admonishment="note"]{
+  background-color: #ddf;
+  border: 1px solid #000;
+  padding: 10px;
 }
-img, input, textarea
-{
-	cursor: default;
+
+div[data-docbook-admonishment="sidebar"]{
+  background-color: #ddd;
+  border: 1px solid #000;
+  padding: 10px;
 }
+
+pre[data-docbook-verbatim="screen"], pre[data-docbook-verbatim="programlisting"], span[data-docbook-style="code"]{
+  background-color: #ddd;
+  font-family: "Courier", monospace; 
+}
+pre[data-docbook-verbatim="screen"], pre[data-docbook-verbatim="programlisting"]{
+  border: 1px solid #000;
+  padding: 10px;
+}  
+  
+
+span[data-docbook-style="classname"] {
+  color: blue;
+  font-family: "Courier", monospace; 
+}
+
+span[data-docbook-style="methodname"] {
+  color: green;
+  font-family: "Courier", monospace; 
+}
+
+span[data-docbook-style="varname"] {
+  color: purple;
+  font-family: "Courier", monospace; 
+}
+
+  
+span[data-docbook-style="constant"] {
+  font-family: "Courier", monospace; }

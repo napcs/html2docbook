@@ -2,7 +2,7 @@ $(function(){
   
   $("#help").hide();
   
-  $("a#help_link").click(function(e){
+  $("a#help_link").on("click", function(e){
     e.preventDefault();
     $("#help").dialog({
       bgiframe: true,

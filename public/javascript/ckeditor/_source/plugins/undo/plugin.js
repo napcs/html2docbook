@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2003-2010, CKSource - Frederico Knabben. All rights reserved.
+Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
 
@@ -64,9 +64,9 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 			editor.on( 'afterCommandExec', recordCommand );
 
 			// Save snapshots before doing custom changes.
-			editor.on( 'saveSnapshot', function()
+			editor.on( 'saveSnapshot', function( evt )
 				{
-					undoManager.save();
+					undoManager.save( evt.data && evt.data.contentOnly );
 				});
 
 			// Registering keydown on every document recreation.(#3844)
@@ -90,7 +90,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 			// Make the undo manager available only in wysiwyg mode.
 			editor.on( 'mode', function()
 				{
-					undoManager.enabled = editor.mode == 'wysiwyg';
+					undoManager.enabled = editor.readOnly ? false : editor.mode == 'wysiwyg';
 					undoManager.onChange();
 				});
 
@@ -114,21 +114,52 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 				// Create the first image.
 				editor.fire( 'saveSnapshot' );
 			};
+
+			/**
+			 * Amend the top of undo stack (last undo image) with the current DOM changes.
+			 * @name CKEDITOR.editor#updateUndo
+			 * @example
+			 * function()
+			 * {
+			 *  editor.fire( 'saveSnapshot' );
+			 * 	editor.document.body.append(...);
+			 *  // Make new changes following the last undo snapshot part of it.
+			 * 	editor.fire( 'updateSnapshot' );
+			 * ...
+			 * }
+			 */
+			editor.on( 'updateSnapshot', function()
+			{
+				if ( undoManager.currentImage )
+					undoManager.update();
+			});
 		}
 	});
 
-	// Gets a snapshot image which represent the current document status.
-	function Image( editor )
+	CKEDITOR.plugins.undo = {};
+
+	/**
+	 * Undo snapshot which represents the current document status.
+	 * @name CKEDITOR.plugins.undo.Image
+	 * @param editor The editor instance on which the image is created.
+	 */
+	var Image = CKEDITOR.plugins.undo.Image = function( editor )
 	{
-		var contents	= editor.getSnapshot(),
+		this.editor = editor;
+
+		editor.fire( 'beforeUndoImage' );
+
+		var contents = editor.getSnapshot(),
 			selection	= contents && editor.getSelection();
 
 		// In IE, we need to remove the expando attributes.
-		CKEDITOR.env.ie && contents && ( contents = contents.replace( /\s+_cke_expando=".*?"/g, '' ) );
+		CKEDITOR.env.ie && contents && ( contents = contents.replace( /\s+data-cke-expando=".*?"/g, '' ) );
 
 		this.contents	= contents;
 		this.bookmarks	= selection && selection.createBookmarks2( true );
-	}
+
+		editor.fire( 'afterUndoImage' );
+	};
 
 	// Attributes that browser may changing them when setting via innerHTML.
 	var protectedAttrs = /\b(?:href|src|name)="[^"]*?"/gi;
@@ -137,6 +168,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 	{
 		equals : function( otherImage, contentOnly )
 		{
+
 			var thisContents = this.contents,
 				otherContents = otherImage.contents;
 
@@ -228,7 +260,8 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 
 			if ( startedTyping || modifierSnapshot )
 			{
-				var beforeTypeImage = new Image( this.editor );
+				var beforeTypeImage = new Image( this.editor ),
+					beforeTypeCount = this.snapshots.length;
 
 				// Use setTimeout, so we give the necessary time to the
 				// browser to insert the character into the DOM.
@@ -238,9 +271,12 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 
 						// In IE, we need to remove the expando attributes.
 						if ( CKEDITOR.env.ie )
-							currentSnapshot = currentSnapshot.replace( /\s+_cke_expando=".*?"/g, '' );
+							currentSnapshot = currentSnapshot.replace( /\s+data-cke-expando=".*?"/g, '' );
 
-						if ( beforeTypeImage.contents != currentSnapshot )
+						// If changes have taken place, while not been captured yet (#8459),
+						// compensate the snapshot.
+						if ( beforeTypeImage.contents != currentSnapshot &&
+							 beforeTypeCount == this.snapshots.length )
 						{
 							// It's safe to now indicate typing state.
 							this.typing = true;
@@ -310,7 +346,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 			 */
 			this.index = -1;
 
-			this.limit = this.editor.config.undoStackSize;
+			this.limit = this.editor.config.undoStackSize || 20;
 
 			this.currentImage = null;
 
@@ -378,10 +414,21 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 
 		restoreImage : function( image )
 		{
+			// Bring editor focused to restore selection.
+			var editor = this.editor,
+				sel;
+
+			if ( image.bookmarks )
+			{
+				editor.focus();
+				// Retrieve the selection beforehand. (#8324)
+				sel = editor.getSelection();
+			}
+
 			this.editor.loadSnapshot( image.contents );
 
 			if ( image.bookmarks )
-				this.editor.getSelection().selectBookmarks( image.bookmarks );
+				sel.selectBookmarks( image.bookmarks );
 			else if ( CKEDITOR.env.ie )
 			{
 				// IE BUG: If I don't set the selection to *somewhere* after setting
@@ -397,8 +444,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 			// Update current image with the actual editor
 			// content, since actualy content may differ from
 			// the original snapshot due to dom change. (#4622)
-			this.snapshots.splice( this.index, 1, ( this.currentImage =  new Image( this.editor ) ) );
-
+			this.update();
 			this.fireChange();
 		},
 
@@ -497,6 +543,14 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 			}
 
 			return false;
+		},
+
+		/**
+		 * Update the last snapshot of the undo stack with the current editor content.
+		 */
+		update : function()
+		{
+			this.snapshots.splice( this.index, 1, ( this.currentImage = new Image( this.editor ) ) );
 		}
 	};
 })();
@@ -504,16 +558,36 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 /**
  * The number of undo steps to be saved. The higher this setting value the more
  * memory is used for it.
+ * @name CKEDITOR.config.undoStackSize
  * @type Number
  * @default 20
  * @example
  * config.undoStackSize = 50;
  */
-CKEDITOR.config.undoStackSize = 20;
 
 /**
  * Fired when the editor is about to save an undo snapshot. This event can be
  * fired by plugins and customizations to make the editor saving undo snapshots.
  * @name CKEDITOR.editor#saveSnapshot
+ * @event
+ */
+
+/**
+ * Fired before an undo image is to be taken. An undo image represents the
+ * editor state at some point. It's saved into an undo store, so the editor is
+ * able to recover the editor state on undo and redo operations.
+ * @name CKEDITOR.editor#beforeUndoImage
+ * @since 3.5.3
+ * @see CKEDITOR.editor#afterUndoImage
+ * @event
+ */
+
+/**
+ * Fired after an undo image is taken. An undo image represents the
+ * editor state at some point. It's saved into an undo store, so the editor is
+ * able to recover the editor state on undo and redo operations.
+ * @name CKEDITOR.editor#afterUndoImage
+ * @since 3.5.3
+ * @see CKEDITOR.editor#beforeUndoImage
  * @event
  */
