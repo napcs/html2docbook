@@ -1,8 +1,8 @@
 require 'sinatra'
 require 'haml' 
-require 'lib/html_to_docbook'
+require './lib/html_to_docbook'
 
-JQUERY = "http://ajax.googleapis.com/ajax/libs/jquery/1.4.0/jquery.min.js"
+JQUERY = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.0/jquery.min.js"
 JQUERY_UI = "http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"
 
 set :haml, {:format => :html5 }
@@ -23,11 +23,11 @@ end
 post "/" do
   @code = params[:code]
   
-  #begin
+  begin
     @xml = HtmlToDocbook.new(@code).convert
-  #rescue
-  #  @xml = "I think you have some bad markup up there. I can't understand what you're trying to do. Sorry!"
-  #end
+  rescue
+    @xml = "I think you have some bad markup up there. I can't understand what you're trying to do. Sorry!"
+  end
   
   haml :index
 end
