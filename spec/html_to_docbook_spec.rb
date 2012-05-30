@@ -40,6 +40,32 @@ describe HtmlToDocbook do
     
   end
   
+  describe "images" do
+    
+     def results
+        doc = "<img src='images/foo.jpg' alt='The title'>"
+        # convert and throw it back to nokogiri to test it
+        Nokogiri::XML(HtmlToDocbook.new(doc).convert)
+      end
+
+      it "should have an image object within a media object within a screenshot within a figure " do
+        results.css("figure>screenshot>mediaobject>imageobject").first.should_not be_nil
+      end
+      
+      it "should have the figure's title as the alt text" do
+        results.css("figure>title").first.content.should == "The title"
+      end
+      
+      it "should not include a caption if there's no title attribute" do
+        results.css("figure>caption").first.should be_nil
+      end
+      
+      it "should have a caption if there's a title" do
+        doc = "<img src='images/foo.jpg' title='The caption' alt='The title'>"
+        Nokogiri::XML(HtmlToDocbook.new(doc).convert).css("figure>caption").first.content.should == "The caption"
+      end
+  end
+  
   
   describe "straight conversion of tags" do
     it "converts p to para" do

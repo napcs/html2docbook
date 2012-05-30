@@ -1,4 +1,4 @@
-CKEDITOR.plugins.add( 'DocbookProgramlisting',
+CKEDITOR.plugins.add( 'docbookprogramlisting',
 {
     init: function( editor )
     {

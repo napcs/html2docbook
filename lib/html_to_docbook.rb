@@ -93,8 +93,10 @@ class HtmlToDocbook
           else
             div = Nokogiri::XML::Node.new("sect#{level -1}",doc)
           end
-          div.set_attribute("xml:id", node.attr("id").to_s)
-          node.remove_attribute("id")
+          if node.attr("i")
+            div.set_attribute("xml:id", node.attr("id").to_s) 
+            node.remove_attribute("id")
+          end
           node.add_next_sibling(div)
           node.name="title"
           div.add_child(node)
@@ -146,14 +148,15 @@ class HtmlToDocbook
   def fix_images
     doc.css("img").each do |img|
       figure = Nokogiri::XML::Node.new("figure", doc)
-      figure.set_attribute("xml:id", img.attr("id").to_s)
+      figure.set_attribute("xml:id", img.attr("id").to_s) if img.attr("id")
       
       title = figure.add_child(Nokogiri::XML::Node.new("title", doc))
-      title.add_child Nokogiri::XML::Text.new(img.attr("title").to_s, doc)
-  
-      caption = figure.add_child(Nokogiri::XML::Node.new("caption", doc))
-      caption.add_child Nokogiri::XML::Text.new(img.attr("alt").to_s, doc)
-  
+      title.add_child Nokogiri::XML::Text.new(img.attr("alt").to_s, doc)
+      
+      if img.attr("title")
+        caption = figure.add_child(Nokogiri::XML::Node.new("caption", doc))
+        caption.add_child Nokogiri::XML::Text.new(img.attr("title").to_s, doc)
+      end
   
       ss = figure.add_child(Nokogiri::XML::Node.new("screenshot", doc))
       mo = ss.add_child(Nokogiri::XML::Node.new("mediaobject", doc))

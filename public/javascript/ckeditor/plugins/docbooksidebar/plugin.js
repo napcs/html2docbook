@@ -1,4 +1,4 @@
-CKEDITOR.plugins.add( 'DocbookSidebar',
+CKEDITOR.plugins.add( 'docbooksidebar',
 {
     init: function( editor )
     {

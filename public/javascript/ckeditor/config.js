@@ -17,7 +17,7 @@
   ];
 
   config.stylesSet = 'docbook_styles';
-  config.extraPlugins = 'DocbookSidebar,DocbookProgramlisting'; 
+  config.extraPlugins = 'docbooksidebar,docbookprogramlisting'; 
 
 };
   
