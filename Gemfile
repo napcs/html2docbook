@@ -2,6 +2,7 @@ source :rubygems
 
 gem 'sinatra'
 gem 'haml'
+gem 'sass'
 gem 'nokogiri'
 
 group :development, :test do
