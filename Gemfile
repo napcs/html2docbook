@@ -3,5 +3,8 @@ source :rubygems
 gem 'sinatra'
 gem 'haml'
 gem 'nokogiri'
-gem 'rspec', :group => :test
-gem 'rack-test', :group => :test
+
+group :development, :test do
+  gem 'rspec', :group => :test
+  gem 'rack-test', :group => :test
+end
